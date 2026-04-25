@@ -1,0 +1,28 @@
+{
+  "name": "@t8n/google-oauth",
+  "version": "1.0.0",
+  "description": "Lightweight Google OAuth2 client for TitanPL",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "titan.json",
+    "utils/",
+    "README.md"
+  ],
+  "keywords": [
+    "titanpl",
+    "titan",
+    "extension"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@titanpl/core": "latest",
+    "@titanpl/native": "latest",
+    "@titanpl/node": "latest"
+  }
+}
