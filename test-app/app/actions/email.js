@@ -2,7 +2,7 @@ import { defineAction, response } from "@titanpl/native";
 import { google } from "./login";
 
 export default defineAction((req) => {
-    const access_token = req.query.token || "ya29.a0Aa7MYipOT2eg88tuUPb1PtNkueRHudICQ2zXAjpcDyHNFZdJ29dVywdHz7TYR9hoSA1qINIuR3k6-KCCmnTvP-CuRV3jFGWYKwzGyzIy7Li6ur0xcy_lQD_8vyHdT3N3gVHaZyPXE2wDs-jk4M2lWFexyiOUVNeKgmTgQP7RHEm00pMGdJh5zgyXzTdxF-eTfxkBc6oaCgYKAZkSARUSFQHGX2MiLv4rypdgl-f591zITIbamA0206";
+    const access_token = Titan.env.GOOGLE_ACCESS_TOKEN
     const count = parseInt(req.query.count) || 5;
     const q = req.query.q || "has:attachment";
 
