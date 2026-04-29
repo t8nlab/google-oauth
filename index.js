@@ -102,7 +102,8 @@ export default class Google {
         picture: user.picture,
       },
       access_token: token.access_token,
-      refresh_token: token.refresh_token
+      refresh_token: token.refresh_token,
+      id_token: token.id_token
     }
   }
 
@@ -123,6 +124,17 @@ export default class Google {
     }))
 
     return JSON.parse(tokenRes.body)
+  }
+
+  // 🔹 Verify ID Token
+  verifyIdToken(id_token) {
+    const res = drift(fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + id_token))
+    
+    if (res.status !== 200) {
+      throw new Error("Invalid ID token: " + res.body)
+    }
+
+    return JSON.parse(res.body)
   }
 
   // 🔹 Gmail API Utility

@@ -50,6 +50,9 @@ export interface GoogleAuthResult {
 
   /** Refresh token for Google APIs (returned on first login or prompt=consent) */
   refresh_token?: string;
+
+  /** ID token for OIDC verification */
+  id_token?: string;
 }
 
 /**
@@ -124,6 +127,11 @@ declare class Google {
     token_type: string;
     id_token?: string;
   };
+
+  /**
+   * Verifies an ID token using Google's tokeninfo endpoint and returns the decoded payload.
+   */
+  verifyIdToken(id_token: string): any;
 
   /**
    * Gmail API Utility
