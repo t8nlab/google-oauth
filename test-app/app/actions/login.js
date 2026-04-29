@@ -7,7 +7,7 @@ const client_id = Titan.env.GOOGLE_OAUTH_CLINET_ID
 export const google = new Google({
     clientId: client_id,
     clientSecret: Titan.env.GOOGLE_OAUTH_SECRET,
-    redirectUri: "http://localhost:5100/call",
+    redirectUri: "https://fax-cornfield-landless.ngrok-free.dev/call",
     scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly"
 })
 

@@ -9,6 +9,7 @@ Lightweight, high-performance Google OAuth2 and Gmail API client for **TitanPL**
 - 🔍 **Advanced Search**: Filter emails using powerful Gmail search queries.
 - 📎 **Attachments**: Comprehensive support for listing and downloading email attachments.
 - 🔄 **Token Refresh**: Effortlessly generate new access tokens from refresh tokens.
+- 🛡️ **ID Token Verification**: Securely verify Google `id_token`s.
 - 🛡️ **JWT Parsing**: Built-in utility to decode Google ID tokens.
 - 🚀 **Titan Native**: Optimized for Titan Surface and Gravity runtime.
 
@@ -104,6 +105,28 @@ export default defineAction((req) => {
 });
 ```
 
+### 6. Verifying ID Tokens
+
+If you are implementing your own flow or need to verify a user's identity securely, you should verify the `id_token`. Google returns an `id_token` only when you include the `openid` scope.
+
+```javascript
+// action: verify.js
+export default defineAction((req) => {
+    const idToken = req.query.id_token;
+    
+    // Verifies the token cryptographically via Google's tokeninfo endpoint
+    // Throws an Error if the token is invalid or expired
+    const decoded = google.verifyIdToken(idToken);
+    
+    return {
+        id: decoded.sub,
+        email: decoded.email,
+        name: decoded.name,
+        picture: decoded.picture
+    };
+});
+```
+
 ## API Reference
 
 ### `new Google(config)`
@@ -123,6 +146,10 @@ Exchanges authorization code for tokens and user profile.
 ### `google.refreshToken(token)`
 Generates a new access token.
 - Returns: `{ access_token, expires_in, scope, token_type, id_token }`.
+
+### `google.verifyIdToken(idToken)`
+Verifies an ID token against Google's `tokeninfo` endpoint. Throws an error if invalid.
+- Returns: Decoded JWT payload (e.g., `{ sub, email, name, picture }`).
 
 ### `google.gmail.messages.list(accessToken, options)`
 Fetches a list of messages with full data.
