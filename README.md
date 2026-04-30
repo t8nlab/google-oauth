@@ -1,6 +1,6 @@
 # @t8n/google-oauth
 
-Lightweight, high-performance Google OAuth2 and Gmail API client for **TitanPL**. This extension provides a synchronous Developer Experience (DX) for handling Google authentication and email data within the Titan Planet ecosystem.
+Lightweight, high-performance Google OAuth2 and Gmail API client for **TitanPL**. This extension provides a synchronous Developer Experience (DX) for handling Google authentication and email data using the native `@titanpl/surface` HTTP module.
 
 ## Features
 
@@ -59,10 +59,10 @@ List recent emails with full metadata and attachments.
 export default defineAction((req) => {
     const token = req.query.token;
     
-    // Fetch 5 emails that have attachments
+    // Fetch 5 emails that match multiple criteria (ORed automatically)
     const emails = google.gmail.messages.list(token, { 
         count: 5,
-        q: "has:attachment" 
+        q: ["has:attachment", "from:important@corp.com"] 
     });
     
     return emails.map(email => ({
@@ -155,7 +155,7 @@ Verifies an ID token against Google's `tokeninfo` endpoint. Throws an error if i
 Fetches a list of messages with full data.
 - `accessToken`: Valid Google access token.
 - `options.count`: Number of messages to fetch (default: 10).
-- `options.q`: Gmail search query (e.g., `from:me`, `has:attachment`).
+- `options.q`: Gmail search query string or array of queries (e.g., `from:me`, `["is:unread", "has:attachment"]`). Array values are joined with `OR`.
 - Returns: `GmailMessage[]`.
 
 ### `google.gmail.messages.getAttachment(accessToken, msgId, attId, mimeType?, filename?)`
@@ -174,6 +174,7 @@ Fetches a specific attachment.
 | `subject` | Email subject |
 | `snippet` | Preview text |
 | `body` | Full HTML/Plain body |
+| `text` | Plain text body |
 | `date` | Date string |
 | `isRead` | Boolean status |
 | `labels` | Array of Gmail labels (e.g., `["INBOX", "UNREAD"]`) |

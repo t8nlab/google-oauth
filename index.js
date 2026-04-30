@@ -1,4 +1,5 @@
-import { buffer, fetch, log, response } from "@titanpl/native"
+import { buffer, log, response } from "@titanpl/native"
+import { http } from "@titanpl/surface"
 function normalizeBase64(input) {
   if (!input) throw new Error("Empty input");
 
@@ -82,15 +83,17 @@ export default class Google {
       "&redirect_uri=" + this.redirectUri +
       "&grant_type=authorization_code"
 
-    const tokenRes = drift(fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
+    const tokenRes = http.post("https://oauth2.googleapis.com/token", body, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body
-    }))
+      }
+    })
 
-    const token = JSON.parse(tokenRes.body)
+    const token = tokenRes.data
+
+    if (!token || !token.id_token) {
+      throw new Error("OAuth callback failed: " + (token?.error_description || token?.error || "Invalid response from Google token endpoint"));
+    }
 
     const user = parseJwt(token.id_token)
 
@@ -115,26 +118,32 @@ export default class Google {
       "&refresh_token=" + refresh_token +
       "&grant_type=refresh_token"
 
-    const tokenRes = drift(fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
+    const tokenRes = http.post("https://oauth2.googleapis.com/token", body, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body
-    }))
+      }
+    })
 
-    return JSON.parse(tokenRes.body)
+    const token = tokenRes.data
+
+    if (!token || !token.access_token) {
+      throw new Error("Token refresh failed: " + (token?.error_description || token?.error || "Invalid response from Google token endpoint"));
+    }
+
+    return token
   }
 
   // 🔹 Verify ID Token
   verifyIdToken(id_token) {
-    const res = drift(fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + id_token))
+    const res = http.get("https://oauth2.googleapis.com/tokeninfo", {
+      params: { id_token }
+    })
     
     if (res.status !== 200) {
-      throw new Error("Invalid ID token: " + res.body)
+      throw new Error("Invalid ID token: " + (res.data?.error_description || JSON.stringify(res.data) || "Unknown error"))
     }
 
-    return JSON.parse(res.body)
+    return res.data
   }
 
   // 🔹 Gmail API Utility
@@ -144,20 +153,35 @@ export default class Google {
       messages: {
         list: (access_token, options = {}) => {
           const maxResults = options.count || 10;
-          const q = options.q ? `&q=${encodeURIComponent(options.q)}` : "";
-          const res = drift(fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}${q}`, {
+          const params = { maxResults };
+          if (options.q) {
+            params.q = Array.isArray(options.q) ? options.q.join(" OR ") : options.q;
+          }
+
+          const res = http.get("https://gmail.googleapis.com/gmail/v1/users/me/messages", {
+            params,
             headers: { Authorization: "Bearer " + access_token }
-          }))
-          const data = JSON.parse(res.body);
+          })
+          
+          if (res.status !== 200) {
+            throw new Error("Gmail API error (list): " + (res.data?.error?.message || JSON.stringify(res.data)));
+          }
+
+          const data = res.data;
 
           if (!data.messages) return [];
 
           // Fetch full data for each message
           return data.messages.map(msg => {
-            const fullMsgRes = drift(fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+            const fullMsgRes = http.get(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
               headers: { Authorization: "Bearer " + access_token }
-            }))
-            const fullMsg = JSON.parse(fullMsgRes.body);
+            })
+
+            if (fullMsgRes.status !== 200) {
+              throw new Error("Gmail API error (get message): " + (fullMsgRes.data?.error?.message || JSON.stringify(fullMsgRes.data)));
+            }
+
+            const fullMsg = fullMsgRes.data;
 
             // Extract Headers
             const headers = fullMsg.payload.headers;
@@ -201,25 +225,36 @@ export default class Google {
               labels: fullMsg.labelIds,
               isRead: !fullMsg.labelIds.includes("UNREAD"),
               body: htmlText || plainText,
+              text: plainText,
               attachments: attachments,
               timestamp: fullMsg.internalDate
             };
           });
         },
         get: (access_token, messageId) => {
-          const res = drift(fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}`, {
+          const res = http.get(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}`, {
             headers: { Authorization: "Bearer " + access_token }
-          }))
-          return JSON.parse(res.body);
+          })
+
+          if (res.status !== 200) {
+            throw new Error("Gmail API error (get): " + (res.data?.error?.message || JSON.stringify(res.data)));
+          }
+
+          return res.data;
         },
         getAttachment: (access_token, messageId, attachmentId, mimeType = "application/octet-stream", filename = "attachment") => {
-          const res = drift(fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`, {
+          const res = http.get(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attachmentId}`, {
             headers: { Authorization: "Bearer " + access_token }
-          }))
-          const data = JSON.parse(res.body);
+          })
+
+          if (res.status !== 200) {
+            throw new Error("Gmail API error (getAttachment): " + (res.data?.error?.message || JSON.stringify(res.data)));
+          }
+
+          const data = res.data;
           if (!data || !data.data) {
-            log("[ERROR] Gmail getAttachment response body:", res.body);
-            throw new Error(`Gmail attachment data missing. Status: ${res.status || 'unknown'}. Body: ${res.body}`);
+            log("[ERROR] Gmail getAttachment response:", res.data);
+            throw new Error(`Gmail attachment data missing. Status: ${res.status || 'unknown'}. Body: ${JSON.stringify(res.data)}`);
           }
           const isVisual = /image|pdf|video|audio/.test(mimeType);
           const finalData = isVisual ? toDataURL(data.data, mimeType) : data.data;

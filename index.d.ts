@@ -1,7 +1,7 @@
 /**
  * @package @t8n/google-oauth
  * Lightweight Google OAuth2 client for TitanPL.
- * Provides a synchronous DX over OAuth using TitanPl Runtime APIs response, fetch, drift etc.
+ * Provides a synchronous DX over OAuth using TitanPl Runtime APIs like response and http.
  */
 
 /**
@@ -79,6 +79,8 @@ export interface GmailMessage {
   isRead: boolean;
   /** Readable body content (HTML or Plain) */
   body: string;
+  /** Plain text body content */
+  text: string;
   /** List of attachments */
   attachments: {
     id: string;
@@ -97,8 +99,8 @@ export interface GmailMessage {
 export interface GmailListOptions {
   /** Maximum number of messages to return (default: 10) */
   count?: number;
-  /** Gmail search query (e.g. "has:attachment", "from:someone@gmail.com") */
-  q?: string;
+  /** Gmail search query or array of queries to be ORed (e.g. ["from:someone", "has:attachment"]) */
+  q?: string | string[];
 }
 
 /**

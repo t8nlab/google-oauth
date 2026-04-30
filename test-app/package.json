@@ -13,7 +13,8 @@
     "@titanpl/native": "latest",
     "@titanpl/node": "latest",
     "@titanpl/packet": "latest",
-    "@titanpl/route": "latest"
+    "@titanpl/route": "latest",
+    "@titanpl/surface": "^1.0.4"
   },
   "optionalDependencies": {
     "@titanpl/engine-linux-x64": "latest",
