@@ -53,6 +53,12 @@ export interface GoogleAuthResult {
 
   /** ID token for OIDC verification */
   id_token?: string;
+
+  /** Access token expiration time in seconds */
+  access_token_expires_in?: number | null;
+
+  /** Refresh token expiration time in seconds */
+  refresh_token_expires_in?: number | null;
 }
 
 /**

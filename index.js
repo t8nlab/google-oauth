@@ -1,4 +1,4 @@
-import { buffer, log, response } from "@titanpl/native"
+import { buffer, fetch, log, response } from "@titanpl/native"
 import { http } from "@titanpl/surface"
 function normalizeBase64(input) {
   if (!input) throw new Error("Empty input");
@@ -83,17 +83,15 @@ export default class Google {
       "&redirect_uri=" + this.redirectUri +
       "&grant_type=authorization_code"
 
-    const tokenRes = http.post("https://oauth2.googleapis.com/token", body, {
+    const tokenRes = drift(fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
-      }
-    })
+      },
+      body
+    }))
 
-    const token = tokenRes.data
-
-    if (!token || !token.id_token) {
-      throw new Error("OAuth callback failed: " + (token?.error_description || token?.error || "Invalid response from Google token endpoint"));
-    }
+    const token = JSON.parse(tokenRes.body)
 
     const user = parseJwt(token.id_token)
 
@@ -106,7 +104,9 @@ export default class Google {
       },
       access_token: token.access_token,
       refresh_token: token.refresh_token,
-      id_token: token.id_token
+      id_token: token.id_token,
+      access_token_expires_in: token.expires_in,
+      refresh_token_expires_in: token.refresh_token_expires_in
     }
   }
 
@@ -138,7 +138,7 @@ export default class Google {
     const res = http.get("https://oauth2.googleapis.com/tokeninfo", {
       params: { id_token }
     })
-    
+
     if (res.status !== 200) {
       throw new Error("Invalid ID token: " + (res.data?.error_description || JSON.stringify(res.data) || "Unknown error"))
     }
@@ -162,7 +162,7 @@ export default class Google {
             params,
             headers: { Authorization: "Bearer " + access_token }
           })
-          
+
           if (res.status !== 200) {
             throw new Error("Gmail API error (list): " + (res.data?.error?.message || JSON.stringify(res.data)));
           }
