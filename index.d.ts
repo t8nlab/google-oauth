@@ -118,7 +118,7 @@ declare class Google {
   /**
    * Redirects the user to Google OAuth consent screen.
    */
-  signIn(): any;
+  signIn(options?: { state?: string }): any;
 
   /**
    * Handles OAuth callback and exchanges authorization code for tokens.
@@ -157,6 +157,53 @@ declare class Google {
       get(access_token: string, messageId: string): any;
 
       /**
+       * Sends a new email.
+       */
+      send(access_token: string, email: {
+        to: string;
+        subject: string;
+        body: string;
+        cc?: string;
+        bcc?: string;
+      }): any;
+
+      /**
+       * Trashes a message.
+       */
+      trash(access_token: string, messageId: string): any;
+
+      /**
+       * Untrashes a message.
+       */
+      untrash(access_token: string, messageId: string): any;
+
+      /**
+       * Permanently deletes a message.
+       */
+      delete(access_token: string, messageId: string): boolean;
+
+      /**
+       * Modifies labels on a message.
+       */
+      modify(access_token: string, messageId: string, mods: {
+        addLabelIds?: string[];
+        removeLabelIds?: string[];
+      }): any;
+
+      /**
+       * Archive a message (removes INBOX label).
+       */
+      archive(access_token: string, messageId: string): any;
+
+      /**
+       * Move a message by adding/removing labels.
+       */
+      move(access_token: string, messageId: string, options: {
+        addLabelIds?: string[];
+        removeLabelIds?: string[];
+      }): any;
+
+      /**
        * Gets attachment data.
        */
       getAttachment(
@@ -171,6 +218,65 @@ declare class Google {
         mimeType: string;
         raw: string;
       };
+    };
+    threads: {
+      /**
+       * Lists threads.
+       */
+      list(access_token: string, options?: GmailListOptions): any[];
+
+      /**
+       * Gets a single thread.
+       */
+      get(access_token: string, threadId: string): any;
+
+      /**
+       * Trashes a thread.
+       */
+      trash(access_token: string, threadId: string): any;
+
+      /**
+       * Untrashes a thread.
+       */
+      untrash(access_token: string, threadId: string): any;
+
+      /**
+       * Permanently deletes a thread.
+       */
+      delete(access_token: string, threadId: string): boolean;
+    };
+  };
+
+  /**
+   * Photos API Utility
+   */
+  readonly photos: {
+    albums: {
+      /**
+       * Lists albums.
+       */
+      list(access_token: string, options?: { count?: number, pageToken?: string }): any;
+
+      /**
+       * Gets a single album.
+       */
+      get(access_token: string, albumId: string): any;
+    };
+    mediaItems: {
+      /**
+       * Lists media items.
+       */
+      list(access_token: string, options?: { count?: number, pageToken?: string }): any;
+
+      /**
+       * Gets a single media item.
+       */
+      get(access_token: string, mediaItemId: string): any;
+
+      /**
+       * Searches for media items.
+       */
+      search(access_token: string, filters?: any): any;
     };
   };
 

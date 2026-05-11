@@ -5,13 +5,15 @@ Lightweight, high-performance Google OAuth2 and Gmail API client for **TitanPL**
 ## Features
 
 - 🔐 **OAuth2 Flow**: Easy sign-in and callback handling.
-- 📧 **Gmail Integration**: List emails with full data (Sender, Subject, Body, Snippet) in one call.
+- 📧 **Gmail Integration**: List, send, archive, and move emails with full data.
+- 🖼️ **Google Photos**: Access albums and media items effortlessly.
 - 🔍 **Advanced Search**: Filter emails using powerful Gmail search queries.
 - 📎 **Attachments**: Comprehensive support for listing and downloading email attachments.
 - 🔄 **Token Refresh**: Effortlessly generate new access tokens from refresh tokens.
 - 🛡️ **ID Token Verification**: Securely verify Google `id_token`s.
 - 🛡️ **JWT Parsing**: Built-in utility to decode Google ID tokens.
 - 🚀 **Titan Native**: Optimized for Titan Surface and Gravity runtime.
+- 📂 **Modular Structure**: Cleanly split into `gmail`, `photos`, and `helpers`.
 
 ## Installation
 
@@ -38,13 +40,17 @@ const google = new Google({
 
 ```javascript
 // action: login.js
-export default defineAction(() => {
-    return google.signIn();
+export default defineAction((req) => {
+    // You can pass a 'state' parameter to maintain state between login and callback
+    return google.signIn({ state: "my-custom-state" });
 });
 
 // action: callback.js
 export default defineAction((req) => {
-    const result = google.callback(req.query.code);
+    // Google returns 'code' and 'state' in the query
+    const { code, state } = req.query;
+    
+    const result = google.callback(code);
     // Returns { user, access_token, refresh_token }
     return result;
 });
@@ -52,6 +58,7 @@ export default defineAction((req) => {
 
 ### 3. Gmail API Usage
 
+#### Listing Emails
 List recent emails with full metadata and attachments.
 
 ```javascript
@@ -59,20 +66,67 @@ List recent emails with full metadata and attachments.
 export default defineAction((req) => {
     const token = req.query.token;
     
-    // Fetch 5 emails that match multiple criteria (ORed automatically)
+    // Fetch 5 emails that match multiple criteria
     const emails = google.gmail.messages.list(token, { 
         count: 5,
         q: ["has:attachment", "from:important@corp.com"] 
     });
     
-    return emails.map(email => ({
-        subject: email.subject,
-        attachments: email.attachments.map(a => a.filename)
-    }));
+    return emails;
 });
 ```
 
-### 4. Downloading Attachments
+#### Sending Emails
+```javascript
+// action: send.js
+export default defineAction((req) => {
+    const token = req.query.token;
+    
+    return google.gmail.messages.send(token, {
+        to: "recipient@example.com",
+        subject: "Hello from TitanPL",
+        body: "<h1>This is a test email</h1><p>Sent via @t8n/google-oauth</p>",
+        cc: "boss@example.com"
+    });
+});
+```
+
+#### Managing Messages
+```javascript
+// Mark as read (remove UNREAD label)
+google.gmail.messages.modify(token, messageId, { 
+    removeLabelIds: ["UNREAD"] 
+});
+
+// Archive (remove INBOX label)
+google.gmail.messages.archive(token, messageId);
+
+// Move to trash
+google.gmail.messages.trash(token, messageId);
+```
+
+### 4. Google Photos API Usage
+
+Access albums and media items. Ensure you have the appropriate scopes (e.g., `https://www.googleapis.com/auth/photoslibrary.readonly`).
+
+```javascript
+// action: photos.js
+export default defineAction((req) => {
+    const token = req.query.token;
+    
+    // List albums
+    const albums = google.photos.albums.list(token, { count: 10 });
+    
+    // Search for media items in a specific album
+    const media = google.photos.mediaItems.search(token, {
+        albumId: "ALBUM_ID"
+    });
+    
+    return { albums, media };
+});
+```
+
+### 5. Downloading Attachments
 
 Fetch attachment content as a Data URL for preview or raw data.
 
@@ -136,8 +190,9 @@ Initializes the Google client.
 - `redirectUri`: Callback URL.
 - `scope`: Space-separated scopes.
 
-### `google.signIn()`
+### `google.signIn(options)`
 Returns a redirect response to the Google Consent screen.
+- `options.state`: (Optional) Opaque value passed to the callback.
 
 ### `google.callback(code)`
 Exchanges authorization code for tokens and user profile.
@@ -153,10 +208,23 @@ Verifies an ID token against Google's `tokeninfo` endpoint. Throws an error if i
 
 ### `google.gmail.messages.list(accessToken, options)`
 Fetches a list of messages with full data.
-- `accessToken`: Valid Google access token.
-- `options.count`: Number of messages to fetch (default: 10).
-- `options.q`: Gmail search query string or array of queries (e.g., `from:me`, `["is:unread", "has:attachment"]`). Array values are joined with `OR`.
 - Returns: `GmailMessage[]`.
+
+### `google.gmail.messages.send(accessToken, email)`
+Sends a new message.
+- `email.to`: Recipient email.
+- `email.subject`: Email subject.
+- `email.body`: HTML or plain text body.
+- `email.cc/bcc`: (Optional) CC/BCC recipients.
+
+### `google.gmail.messages.trash/untrash/delete(accessToken, messageId)`
+Manage message lifecycle.
+
+### `google.gmail.messages.modify(accessToken, messageId, mods)`
+Modify labels. `mods` is `{ addLabelIds, removeLabelIds }`.
+
+### `google.gmail.threads.list/get/trash/untrash/delete(accessToken, ...)`
+Manage email threads.
 
 ### `google.gmail.messages.getAttachment(accessToken, msgId, attId, mimeType?, filename?)`
 Fetches a specific attachment.

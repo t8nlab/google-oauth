@@ -8,7 +8,7 @@ export const google = new Google({
     clientId: client_id,
     clientSecret: Titan.env.GOOGLE_OAUTH_SECRET,
     redirectUri: "https://fax-cornfield-landless.ngrok-free.dev/signup",
-    scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly"
+    scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/photoslibrary.readonly"
 })
 
 export default defineAction((req) => {

@@ -1,6 +1,6 @@
 {
   "name": "@t8n/google-oauth",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Lightweight Google OAuth2 client for TitanPL",
   "type": "module",
   "main": "index.js",
@@ -9,6 +9,7 @@
     "index.js",
     "index.d.ts",
     "titan.json",
+    "lib/",
     "utils/",
     "README.md"
   ],
