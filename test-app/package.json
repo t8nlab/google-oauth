@@ -9,12 +9,12 @@
     "@t8n/google-oauth": "file:..",
     "@t8n/stream": "^1.0.0",
     "@titanpl/cli": "latest",
-    "@titanpl/core": "3.0.7",
+    "@titanpl/core": "4.0.0",
     "@titanpl/native": "latest",
     "@titanpl/node": "latest",
     "@titanpl/packet": "latest",
     "@titanpl/route": "latest",
-    "@titanpl/surface": "^1.0.4"
+    "@titanpl/surface": "^1.0.5"
   },
   "optionalDependencies": {
     "@titanpl/engine-linux-x64": "latest",
